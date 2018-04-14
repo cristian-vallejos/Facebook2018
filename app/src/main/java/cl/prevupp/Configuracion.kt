@@ -1,3 +1,5 @@
+import cl.prevupp.*
+
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.os.Bundle
@@ -10,7 +12,7 @@ import java.util.ArrayList
 
 /**
  * Clase para la configuracion de los distintos datos
- */
+
 
 class Configuracion : AppCompatActivity() {
 
@@ -113,4 +115,4 @@ class Configuracion : AppCompatActivity() {
         private val TAG = "Configuracion"
         var EXTRA_DEVICE_ADDRESS = "device_address"
     }
-}
+}*/
