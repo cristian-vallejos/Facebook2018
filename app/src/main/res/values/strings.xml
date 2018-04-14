@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">PREV UPP</string>
+
+    <!-- String zonas de presion -->
+    <string name="zonas">Zonas de Presión</string>
+
+    <!-- String configuracion -->
+    <string name="conf">Configuración</string>
+
+    <!-- String configuracion bluetooth -->
+    <string name="none_paired">No hay dispositivos emparejados</string>
+    <string name="disconnected">Bluetooth está desactivado</string>
+
+    <!-- String presentacion -->
+    <string name="bienvenida">Bienvenidos</string>
+
+    <!-- String Configuracion -->
+    <string name="Conexiones">Conexiones Bluetooth</string>
+    <string name="Idioma">Idiomas Disponibles</string>
+    <string name="Temporizador">Tiempo De Alerta</string>
+    <string name="Sonido">Sonido de Alerta</string>
+
+    <!-- string Spinner Idiomas -->
+    <string-array name="idiomas">
+        <item>Español</item>
+        <item>Inglés</item>
+        <item>Portugués</item>
+    </string-array>
+
+    <!-- string Spinner Tiempo -->
+    <string-array name="tiempos">
+        <item>15 minutos</item>
+        <item>30 minutos</item>
+        <item>45 minutos</item>
+        <item>60 minutos</item>
+    </string-array>
+
+    <!-- string Spinner Alertas -->
+    <string-array name="alertas">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <!-- string bluetooth -->
+    <string name="On">On</string>
+    <string name="Off">Off</string>
+    <string name="Scanner">Scan</string>
+
+    <!-- string alerta-->
+    <string name="AlertaBT">Su dispositivo no mantiene soporte de Bluetooth</string>
+    <string name="Encendido">Bluetooth encendido</string>
+    <string name="Encendido2">Bluetooth ya esta encendido</string>
+
+</resources>
