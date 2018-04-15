@@ -6,10 +6,8 @@ import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.media.RingtoneManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -28,21 +26,22 @@ import java.util.*
 
 /**
  * Clase para la muestra de la pantalla principal
- */
-
+ *
+*/
 class Zonas : AppCompatActivity() {
 
-    internal var boxes = ArrayList<RelativeLayout>()
     internal var circles = ArrayList<ImageView>()
     internal var last_sensors = ArrayList(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0))
 
-    internal var valores: Handler
+    lateinit var valores: Handler
     internal val RECIEVE_MESSAGE = 1      // Status  for Handler
     private var btAdapter: BluetoothAdapter? = null
     private var btSocket: BluetoothSocket? = null
     private val sb = StringBuilder()
+    private val BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    private var address: String? = null
     private var conexion: ConnectedThread? = null
-    private var config: Configuration? = null
+    private val TAG = "Principal"
 
     //Timers para tiempo de vida & notificaciones de presión prolongada
     private var timer: Int = 0
@@ -53,12 +52,7 @@ class Zonas : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.zonas)
-        config = resources.configuration
-        if (config!!.smallestScreenWidthDp >= 321)
-            setContentView(R.layout.principal_redmi)
-        else
-            setContentView(R.layout.principal_alcatel)
-        buttonPantallaConfiguracion()
+        setContentView(R.layout.activity_zonas)
         timer = 0
         change = false
         btAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -66,25 +60,15 @@ class Zonas : AppCompatActivity() {
 
         checkBT()
 
-        //Identificacion de Layouts
-        boxes.add(findViewById(R.id.box1_3) as RelativeLayout)
-        boxes.add(findViewById(R.id.box1_4) as RelativeLayout)
-        boxes.add(findViewById(R.id.box2_3) as RelativeLayout)
-        boxes.add(findViewById(R.id.box2_2) as RelativeLayout)
-        boxes.add(findViewById(R.id.box2_4) as RelativeLayout)
-        boxes.add(findViewById(R.id.box2_1) as RelativeLayout)
-        boxes.add(findViewById(R.id.box1_2) as RelativeLayout)
-        boxes.add(findViewById(R.id.box1_1) as RelativeLayout)
-
         //Identificacion de Circunferencias
-        circles.add(findViewById(R.id.c1_3) as ImageView)
-        circles.add(findViewById(R.id.c1_4) as ImageView)
-        circles.add(findViewById(R.id.c2_3) as ImageView)
-        circles.add(findViewById(R.id.c2_2) as ImageView)
-        circles.add(findViewById(R.id.c2_4) as ImageView)
-        circles.add(findViewById(R.id.c2_1) as ImageView)
-        circles.add(findViewById(R.id.c1_2) as ImageView)
-        circles.add(findViewById(R.id.c1_1) as ImageView)
+        circles.add(findViewById(R.id.sensor1) as ImageView)
+        circles.add(findViewById(R.id.sensor3) as ImageView)
+        circles.add(findViewById(R.id.sensor5) as ImageView)
+        circles.add(findViewById(R.id.sensor6) as ImageView)
+        circles.add(findViewById(R.id.sensor7) as ImageView)
+        circles.add(findViewById(R.id.sensor4) as ImageView)
+        circles.add(findViewById(R.id.sensor2) as ImageView)
+        circles.add(findViewById(R.id.sensor0) as ImageView)
 
         valores = object : Handler() {
             override fun handleMessage(msg: android.os.Message) {
@@ -97,6 +81,7 @@ class Zonas : AppCompatActivity() {
                         val endOfLineIndex = sb.indexOf("\n")                              // determine the end-of-line
                         if (endOfLineIndex > 0) {                                           // if end-of-line,
                             val sbprint = sb.substring(0, endOfLineIndex - 1)             // extract string
+                            println(sbprint)
                             sb.delete(0, sb.length)
                             val sensors = sbprint.split("&".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
@@ -155,77 +140,48 @@ class Zonas : AppCompatActivity() {
                                     if (isInteger(sensors[i])) {
                                         last_sensors[i] = Integer.parseInt(sensors[i])
                                         val value = Integer.parseInt(sensors[i])
+                                        val px130 = 130 * applicationContext.getResources().getDisplayMetrics().density
+
+                                        if (value < 10)
+                                            circles[i].visibility = View.INVISIBLE
+                                        else
+                                            circles[i].visibility = View.VISIBLE
+
+                                        circles[i].getLayoutParams().width = value*px130.toInt()/1000
+                                        circles[i].getLayoutParams().height = value*px130.toInt()/1000
+                                        circles[i].requestLayout()
+                                        circles[i].invalidate()
 
                                         if (!change) {
                                             if (/*(Integer.parseInt(sensors[i]) >= 0 && Integer.parseInt(sensors[i]) < 500) || */timer <= 300) {
-                                                val circle_fine_state: GradientDrawable
-                                                if (config!!.smallestScreenWidthDp >= 321)
-                                                    circle_fine_state = drawCircle(value / 5, 0) //20
-                                                else
-                                                    circle_fine_state = drawCircle(value / 20, 0)
-                                                circles[i].background = circle_fine_state
 
                                                 //  Reset of High Pressure timer for the 'i' sensor
                                                 prolongedCriticPressureTime[i] = 0
                                                 prolongedExtremPressureTime[i] = 0
                                             } else if (/*(Integer.parseInt(sensors[i]) >= 500 && Integer.parseInt(sensors[i]) < 600) || */timer > 300 && timer <= 600) {
-                                                val circle_regular_state: GradientDrawable
-                                                if (config!!.smallestScreenWidthDp >= 321)
-                                                    circle_regular_state = drawCircle(value / 4, 0) //16
-                                                else
-                                                    circle_regular_state = drawCircle(value / 16, 0)
-                                                circles[i].background = circle_regular_state
 
                                                 //  Reset of High Pressure timer for the 'i' sensor
                                                 prolongedCriticPressureTime[i] = 0
                                                 prolongedExtremPressureTime[i] = 0
                                             } else if (/*(Integer.parseInt(sensors[i]) >= 650 && Integer.parseInt(sensors[i]) < 750) || */timer > 600 && timer <= 900) {
+
                                                 //  Adding to High Pressure timer for the 'i' sensor
                                                 prolongedCriticPressureTime[i] = prolongedCriticPressureTime[i] + 1
                                                 prolongedExtremPressureTime[i] = 0
                                                 if (prolongedCriticPressureTime[i] == 1) {
                                                     displayNotificationOfState(i, "Crítico")
                                                 }
-
-                                                val circle_critical_state: GradientDrawable
-                                                if (config!!.smallestScreenWidthDp >= 321)
-                                                    circle_critical_state = drawCircle(value / 3, 2) //12
-                                                else
-                                                    circle_critical_state = drawCircle(value / 12, 0)
-                                                circles[i].background = circle_critical_state
                                             } else if (/*Integer.parseInt(sensors[i]) >= 750 || */timer > 900) {
+
                                                 //  Adding to High Pressure timer for the 'i' sensor
                                                 prolongedExtremPressureTime[i] = prolongedExtremPressureTime[i] + 1
                                                 prolongedCriticPressureTime[i] = 0
                                                 if (prolongedExtremPressureTime[i] == 1) {
                                                     displayNotificationOfState(i, "Extremo")
                                                 }
-
-                                                val circle_extreme_state: GradientDrawable
-                                                if (config!!.smallestScreenWidthDp >= 321) {
-                                                    if (value >= 480) {
-                                                        circle_extreme_state = drawCircle(240, 3)
-                                                    } else {
-                                                        circle_extreme_state = drawCircle(value / 2, 3)  //8
-                                                    }
-                                                } else {
-                                                    if (value >= 480) {
-                                                        circle_extreme_state = drawCircle(60, 3)
-                                                    } else {
-                                                        circle_extreme_state = drawCircle(value / 8, 3)
-                                                    }
-                                                }
-                                                circles[i].background = circle_extreme_state
                                             }
                                         } else {
                                             timer = 0
-
-                                            val circle_fine_state: GradientDrawable
-                                            if (config!!.smallestScreenWidthDp >= 321)
-                                                circle_fine_state = drawCircle(value / 5, 0) //20
-                                            else
-                                                circle_fine_state = drawCircle(value / 20, 0)
-                                            circles[i].background = circle_fine_state
 
                                             //  Reset of High Pressure timer for the 'i' sensor
                                             prolongedCriticPressureTime[i] = 0
@@ -234,83 +190,6 @@ class Zonas : AppCompatActivity() {
                                     }
                                 }
                                 timer = timer + 1
-
-                                /*for (int i = 0; i < sensors.length; i++) {
-                                    if (isInteger(sensors[i])) {
-                                        if (Integer.parseInt(sensors[i]) >= 0 && Integer.parseInt(sensors[i]) < 100) {
-                                            GradientDrawable circle_fine_state;
-                                            if (config.smallestScreenWidthDp >= 321) {
-                                                circle_fine_state = drawCircle(Integer.parseInt(sensors[i]), 0);
-                                            }
-                                            else {
-                                                circle_fine_state = drawCircle(Integer.parseInt(sensors[i])/4, 0);
-                                            }
-                                            circles.get(i).setBackground(circle_fine_state);
-
-                                            //  Reset of High Pressure timer for the 'i' sensor
-                                            prolongedCriticPressureTime.set(i, 0);
-                                            prolongedExtremPressureTime.set(i, 0);
-                                        } else if (Integer.parseInt(sensors[i]) >= 100 && Integer.parseInt(sensors[i]) < 150) {
-                                            GradientDrawable circle_regular_state;
-                                            if (config.smallestScreenWidthDp >= 321) {
-                                                circle_regular_state = drawCircle(Integer.parseInt(sensors[i]), 1);
-                                            }
-                                            else {
-                                                circle_regular_state = drawCircle(Integer.parseInt(sensors[i])/4, 1);
-                                            }
-                                            circles.get(i).setBackground(circle_regular_state);
-
-                                            //  Reset of High Pressure timer for the 'i' sensor
-                                            prolongedCriticPressureTime.set(i, 0);
-                                            prolongedExtremPressureTime.set(i, 0);
-                                        } else if (Integer.parseInt(sensors[i]) >= 150 && Integer.parseInt(sensors[i]) < 200) {
-                                            //  Adding to High Pressure timer for the 'i' sensor
-                                            prolongedCriticPressureTime.set(i, prolongedCriticPressureTime.get(i)+1);
-                                            prolongedExtremPressureTime.set(i, 0);
-                                            if (prolongedCriticPressureTime.get(i) == 1){
-                                                displayNotificationOfState(i, "Crítico");
-                                            }
-                                            else if (prolongedCriticPressureTime.get(i)%600 == 0){
-                                                displayNotificationOfProlongedHighPressure(i, "Crítico");
-                                            }
-
-                                            GradientDrawable circle_critical_state;
-                                            if (config.smallestScreenWidthDp >= 321) {
-                                                circle_critical_state = drawCircle(Integer.parseInt(sensors[i]), 2);
-                                            }
-                                            else {
-                                                circle_critical_state = drawCircle(Integer.parseInt(sensors[i])/4, 2);
-                                            }
-                                            circles.get(i).setBackground(circle_critical_state);
-                                        }
-                                        else if (Integer.parseInt(sensors[i]) >= 200) {
-                                            //  Adding to High Pressure timer for the 'i' sensor
-                                            prolongedExtremPressureTime.set(i, prolongedExtremPressureTime.get(i)+1);
-                                            prolongedCriticPressureTime.set(i, 0);
-                                            if (prolongedExtremPressureTime.get(i) == 1){
-                                                displayNotificationOfState(i, "Extremo");
-                                            }
-                                            else if (prolongedExtremPressureTime.get(i)%1800 == 0){
-                                                displayNotificationOfProlongedHighPressure(i, "Extremo");
-                                            }
-
-                                            GradientDrawable circle_extreme_state;
-                                            if (config.smallestScreenWidthDp >= 321) {
-                                                if (Integer.parseInt(sensors[i]) < 240)
-                                                    circle_extreme_state = drawCircle(Integer.parseInt(sensors[i]), 3);
-                                                else
-                                                    circle_extreme_state = drawCircle(240, 3);
-                                            }
-                                            else {
-                                                if (Integer.parseInt(sensors[i]) < 240)
-                                                    circle_extreme_state = drawCircle(Integer.parseInt(sensors[i])/4, 3);
-                                                else
-                                                    circle_extreme_state = drawCircle(60, 3);
-                                            }
-                                            circles.get(i).setBackground(circle_extreme_state);
-                                        }
-                                    }
-                                }*/
                             }
                         }
                     }
@@ -330,7 +209,7 @@ class Zonas : AppCompatActivity() {
         }
     }
 
-    private fun buttonPantallaConfiguracion() {
+    /*private fun buttonPantallaConfiguracion() {
         val botonC = findViewById(R.id.botonConfiguracion) as ImageButton
         botonC.setOnClickListener {
             try {
@@ -340,7 +219,7 @@ class Zonas : AppCompatActivity() {
 
             android.os.Process.killProcess(android.os.Process.myPid())
         }
-    }
+    }*/
 
 
     @Throws(IOException::class)
@@ -352,7 +231,7 @@ class Zonas : AppCompatActivity() {
         super.onResume()
 
         val intent = intent
-        address = intent.getStringExtra(Configuracion.EXTRA_DEVICE_ADDRESS)
+        address = intent.getStringExtra("EXTRA_DEVICE_ADDRESS")
         val device = btAdapter!!.getRemoteDevice(address)
 
         try {
@@ -378,7 +257,7 @@ class Zonas : AppCompatActivity() {
 
     public override fun onPause() {
         val intent = intent
-        address = intent.getStringExtra(Configuracion.EXTRA_DEVICE_ADDRESS)
+        address = intent.getStringExtra("EXTRA_DEVICE_ADDRESS")
         val device = btAdapter!!.getRemoteDevice(address)
 
         try {
@@ -456,8 +335,7 @@ class Zonas : AppCompatActivity() {
         }
         val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
-        if (config!!.smallestScreenWidthDp >= 321) {
-            noti = NotificationCompat.Builder(this)
+        noti = NotificationCompat.Builder(this)
                     .setContentIntent(pendingIntent)
                     .setTicker(ticker)
                     .setContentTitle(contentTitle)
@@ -467,18 +345,6 @@ class Zonas : AppCompatActivity() {
                     .setVibrate(longArrayOf(100, 250, 100, 500))
                     .setSound(alarmSound)
                     .build()
-        } else {
-            noti = NotificationCompat.Builder(this)
-                    .setContentIntent(pendingIntent)
-                    .setTicker(ticker)
-                    .setContentTitle(contentTitle)
-                    .setContentText(contentText)
-                    .setSmallIcon(R.drawable.icono_48)
-                    .addAction(R.drawable.icono_48, ticker, pendingIntent)
-                    .setVibrate(longArrayOf(100, 250, 100, 500))
-                    .setSound(alarmSound)
-                    .build()
-        }
         nm.notify(zone, noti)
     }
 
@@ -493,8 +359,7 @@ class Zonas : AppCompatActivity() {
         val contentText = "demasiado tiempo en Estado $state"
         val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
-        if (config!!.smallestScreenWidthDp >= 321) {
-            noti = NotificationCompat.Builder(this)
+        noti = NotificationCompat.Builder(this)
                     .setContentIntent(pendingIntent)
                     .setTicker(ticker)
                     .setContentTitle(contentTitle)
@@ -504,71 +369,19 @@ class Zonas : AppCompatActivity() {
                     .setVibrate(longArrayOf(100, 250, 100, 500))
                     .setSound(alarmSound)
                     .build()
-        } else {
-            noti = NotificationCompat.Builder(this)
-                    .setContentIntent(pendingIntent)
-                    .setTicker(ticker)
-                    .setContentTitle(contentTitle)
-                    .setContentText(contentText)
-                    .setSmallIcon(R.drawable.icono_48)
-                    .addAction(R.drawable.icono_48, ticker, pendingIntent)
-                    .setVibrate(longArrayOf(100, 250, 100, 500))
-                    .setSound(alarmSound)
-                    .build()
-        }
         nm.notify(zone, noti)
     }
 
-    fun drawCircle(diameter: Int, state: Int): GradientDrawable {
-        val gd = GradientDrawable()
-        gd.gradientType = GradientDrawable.RADIAL_GRADIENT
-        if (state == 0) {
-            if (diameter < 5) {
-                gd.gradientRadius = 40f
-                gd.colors = intArrayOf(Color.parseColor("#80000000"), Color.parseColor("#80000000"), Color.parseColor("#80000000"))
-                gd.setStroke(1 / 2, Color.parseColor("#80000000"))
-            } else {
-                gd.gradientRadius = (diameter * 8 / 10).toFloat()
-                gd.colors = intArrayOf(Color.parseColor("#FFFF00"), Color.parseColor("#02ae02"), Color.parseColor("#00ce00"))
-                gd.setStroke(1 / 2, Color.parseColor("#039a03"))
-            }
-            gd.shape = GradientDrawable.OVAL
-        } else if (state == 1) {
-            gd.colors = intArrayOf(Color.parseColor("#FF0000"), Color.parseColor("#f9d920"), Color.parseColor("#5cd65c"))
-            gd.gradientRadius = (diameter * 126 / 100).toFloat()
-            gd.shape = GradientDrawable.OVAL
-            gd.setStroke(1 / 2, Color.parseColor("#039a03"))
-        } else if (state == 2) {
-            gd.colors = intArrayOf(Color.parseColor("#FF0000"), Color.parseColor("#ffd633"), Color.parseColor("#ffe066"))
-            gd.gradientRadius = (diameter * 14 / 10).toFloat()
-            gd.shape = GradientDrawable.OVAL
-            gd.setStroke(1 / 2, Color.parseColor("#ffdb4d"))
-        } else {
-            gd.colors = intArrayOf(Color.parseColor("#FF0000"), Color.parseColor("#ff3300"), Color.parseColor("#ff9933"))
-            gd.gradientRadius = (diameter * 88 / 100).toFloat()
-            gd.shape = GradientDrawable.OVAL
-            gd.setStroke(1 / 2, Color.parseColor("#ffcc66"))
+    fun isInteger(s: String): Boolean {
+        var isValidInteger = false
+        try {
+            Integer.parseInt(s)
+            // s is a valid integer
+            isValidInteger = true
+        } catch (ex: NumberFormatException) {
+            // s is not an integer
         }
-        gd.setSize(diameter * 3 / 2, diameter * 3 / 2)
-        return gd
-    }
 
-    companion object {
-        private val BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-        private var address: String? = null
-        private val TAG = "Zonas"
-
-        fun isInteger(s: String): Boolean {
-            var isValidInteger = false
-            try {
-                Integer.parseInt(s)
-                // s is a valid integer
-                isValidInteger = true
-            } catch (ex: NumberFormatException) {
-                // s is not an integer
-            }
-
-            return isValidInteger
-        }
+        return isValidInteger
     }
 }

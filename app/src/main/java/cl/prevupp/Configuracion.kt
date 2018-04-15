@@ -1,116 +1,138 @@
-import android.bluetooth.BluetoothAdapter
+package cl.prevupp
+
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.text.Html
-import android.util.Log
+import android.support.design.widget.BottomNavigationView
 import android.view.View
+import kotlinx.android.synthetic.main.activity_configuracion.*
+import android.R.string.cancel
+import android.app.AlertDialog
+import android.content.DialogInterface
+import android.view.LayoutInflater
+import android.view.MenuItem
 import android.widget.*
-import java.util.ArrayList
+
 
 /**
  * Clase para la configuracion de los distintos datos
- */
+**/
 
 class Configuracion : AppCompatActivity() {
 
-    // Declaracion de variables
-    internal var bluet: Switch
-    private var bluetAdapter: BluetoothAdapter? = null
-    internal var bluetIntent: Intent
-    internal var listBluet: ListView
-    private val bluetArray = ArrayList()
-    internal var texto2: TextView
+    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
+        when (item.itemId) {
+            R.id.navigation_home -> {
+                setTitle("Home")
 
-    private val deviceClick = AdapterView.OnItemClickListener { parent, v, position, id ->
-        texto2.text = "\nEstableciendo conexión..."
-        texto2.visibility = View.VISIBLE
-        val info = (v as TextView).text.toString()
-        val address = info.substring(info.length - 17)
-
-        bluetIntent = Intent(this@Configuracion, Zonas::class.java)
-        bluetIntent.putExtra(EXTRA_DEVICE_ADDRESS, address)
-        startActivity(bluetIntent)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_notifications -> {
+                setTitle("Settings")
+                //setContentView(R.layout.activity_main2)
+                return@OnNavigationItemSelectedListener true
+            }
+        }
+        false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setTitle(R.string.conf)
-        setContentView(R.layout.configuracion)
+        setContentView(R.layout.activity_configuracion)
+        setTitle("Settings")
+        navigation.getMenu().getItem(1).setChecked(true);
+        //navigation.getMenu().removeItem(navigation.getMenu().getItem(1).itemId )
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        buttonbluetooth()
+        buttongender()
+        buttonweight()
     }
 
-    public override fun onResume() {
-        super.onResume()
-
-        checkBT()
-        // Switch
-        bluet = findViewById(R.id.switch1) as Switch
-        bluet.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                BluetEnable()
-            } else {
-                BluetDisable()
-            }
-        }
-        texto2 = findViewById(R.id.textView2) as TextView
-
-        // Bluetooth
-        bluetAdapter = BluetoothAdapter.getDefaultAdapter()
-
-        // Conexiones bluetooth
-        val dispositivosPareados = bluetAdapter!!.bondedDevices
-
-        // Agregar dispositivos pareados
-        listBluet = findViewById(R.id.pareados) as ListView
-        if (dispositivosPareados.size > 0) {
-            for (device in dispositivosPareados) {
-                bluetArray.add(Html.fromHtml("<b>" + device.name + "</b><br>" + device.address))
-            }
-            listBluet.visibility = View.VISIBLE
-            texto2.visibility = View.GONE
-        } else {
-            listBluet.visibility = View.GONE
-            texto2.text = resources.getText(R.string.none_paired)
-            texto2.visibility = View.VISIBLE
-        }
-
-        // Trabajar con la lista
-        listBluet.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, bluetArray)
-        listBluet.onItemClickListener = deviceClick
-    }
-
-    private fun checkBT() {
-        bluet = findViewById(R.id.switch1) as Switch
-        bluetAdapter = BluetoothAdapter.getDefaultAdapter()
-        if (bluetAdapter == null) {
-            Toast.makeText(baseContext, "Dispositivo no soporta bluetooth", Toast.LENGTH_SHORT).show()
-        } else {
-            if (bluetAdapter!!.isEnabled) {
-                bluet.isChecked = true
-                Log.d(TAG, "Bluetooth encendido")
-            } else {
-                bluet.isChecked = false
-                Toast.makeText(baseContext, "Encienda el bluetooth", Toast.LENGTH_SHORT).show()
-            }
+    private fun buttonbluetooth() {
+        val botonblu = findViewById<View>(R.id.bluetooth) as Button
+        botonblu.setOnClickListener {
+            val i2 = Intent(applicationContext, Bluetooth::class.java)
+            startActivity(i2)
         }
     }
 
-    // Activa el Bluetooth
-    private fun BluetEnable() {
-        bluetIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        startActivityForResult(bluetIntent, REQUEST_BLUETOOTH)
+    private fun buttonweight() {
+        val botonwei = findViewById<View>(R.id.weight) as Button
+        botonwei.setOnClickListener {
+
+                // get prompts.xml view
+                val li = LayoutInflater.from(this)
+                val promptsView = li.inflate(R.layout.prompts, null)
+
+                val alertDialogBuilder = AlertDialog.Builder(
+                        this)
+
+                // set prompts.xml to alertdialog builder
+                alertDialogBuilder.setView(promptsView)
+
+                val userInput = promptsView
+                        .findViewById<View>(R.id.editTextDialogUserInput) as EditText
+
+                // set dialog message
+                alertDialogBuilder
+                        .setCancelable(false)
+                        .setPositiveButton("OK",
+                                DialogInterface.OnClickListener { dialog, id ->
+                                    // get user input and set it to result
+                                    // edit text
+                                    val peso = findViewById<View>(R.id.weight_var) as TextView
+                                    val concatena = (userInput.text.toString())  + " Kg"
+                                    peso.setText(concatena)
+                                })
+                        .setNegativeButton("Cancel",
+                                DialogInterface.OnClickListener { dialog, id -> dialog.cancel() })
+
+                // create alert dialog
+                val alertDialog = alertDialogBuilder.create()
+
+                // show it
+                alertDialog.show()
+
+
+        }
     }
 
-    // Desactiva el Bluetooth
-    private fun BluetDisable() {
-        bluetAdapter!!.disable()
-        bluetArray.clear()
-        listBluet.adapter = null
+    private fun buttongender() {
+        val clickListener = View.OnClickListener { view ->
+            when (view.id) {
+                R.id.gender -> {
+                    showPopup(view)
+                }
+            }
+        }
+
+        gender.setOnClickListener(clickListener)
     }
 
-    companion object {
-        var REQUEST_BLUETOOTH = 1
-        private val TAG = "Configuracion"
-        var EXTRA_DEVICE_ADDRESS = "device_address"
+    private fun showPopup(view: View) {
+        var popup: PopupMenu? = null;
+        popup = PopupMenu(this, view)
+        popup.inflate(R.menu.header_menu)
+
+        popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item: MenuItem? ->
+
+            when (item!!.itemId) {
+
+                R.id.header1 -> {
+                    val sexo = findViewById<View>(R.id.gender_var) as TextView
+                    sexo.setText(item.title.toString())
+                }
+                R.id.header2 -> {
+                    val sexo = findViewById<View>(R.id.gender_var) as TextView
+                    sexo.setText(item.title.toString())
+                }
+            }
+
+            true
+        })
+
+        popup.show()
     }
 }
+
+
