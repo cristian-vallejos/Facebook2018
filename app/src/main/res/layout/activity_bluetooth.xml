@@ -22,7 +22,7 @@
             android:layout_weight="0.05"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
-            android:text="BLUETOOTH"
+            android:text="Bluetooth"
             android:textOff="Off"
             android:textOn="On"
             android:theme="@style/MySwitch" />
@@ -40,11 +40,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Seleccione dispositivo a emparejar:\n"
             android:layout_gravity="center_horizontal"
             android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingRight="@dimen/activity_horizontal_margin" />
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:text="Select device to pair:"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <ListView
             android:id="@+id/pareados"

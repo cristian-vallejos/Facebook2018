@@ -54,7 +54,7 @@ class Bluetooth : AppCompatActivity() {
         listBluet = findViewById<View>(R.id.pareados) as ListView
         if (dispositivosPareados.size > 0) {
             for (device in dispositivosPareados) {
-                bluetArray.add(Html.fromHtml("<b>" + device.name + "<b><br>" + device.address))
+                bluetArray.add(Html.fromHtml("<b>" + device.name + "</b><br>" + device.address))
             }
             listBluet.visibility = View.VISIBLE
             texto2.visibility = View.GONE
@@ -99,7 +99,7 @@ class Bluetooth : AppCompatActivity() {
     }
 
     private val deviceClick = AdapterView.OnItemClickListener { parent, v, position, id ->
-        texto2.text = "\nEstablishing connection..."
+        texto2.text = "\nConnecting..."
         texto2.visibility = View.VISIBLE
         val info = (v as TextView).text.toString()
         val address = info.substring(info.length - 17)

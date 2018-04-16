@@ -8,18 +8,19 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.media.RingtoneManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.support.annotation.ColorInt
 import android.support.v4.app.NotificationCompat
-import android.util.Log
+import android.support.v4.widget.ImageViewCompat
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.RelativeLayout
 import android.widget.Toast
 import java.io.*
 import java.util.*
@@ -32,6 +33,7 @@ class Zonas : AppCompatActivity() {
 
     internal var circles = ArrayList<ImageView>()
     internal var last_sensors = ArrayList(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0))
+    internal var notifDisplayed = ArrayList(Arrays.asList(false, false, false, false, false, false, false, false))
 
     lateinit var valores: Handler
     internal val RECIEVE_MESSAGE = 1      // Status  for Handler
@@ -42,19 +44,12 @@ class Zonas : AppCompatActivity() {
     private var address: String? = null
     private var conexion: ConnectedThread? = null
     private val TAG = "Principal"
-
-    //Timers para tiempo de vida & notificaciones de presión prolongada
-    private var timer: Int = 0
-    private var change: Boolean = false
-    private val prolongedCriticPressureTime = ArrayList(Collections.nCopies(8, 0))   //in seconds
-    private val prolongedExtremPressureTime = ArrayList(Collections.nCopies(8, 0))   //in seconds
+    var change: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.zonas)
         setContentView(R.layout.activity_zonas)
-        timer = 0
-        change = false
         btAdapter = BluetoothAdapter.getDefaultAdapter()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -81,53 +76,18 @@ class Zonas : AppCompatActivity() {
                         val endOfLineIndex = sb.indexOf("\n")                              // determine the end-of-line
                         if (endOfLineIndex > 0) {                                           // if end-of-line,
                             val sbprint = sb.substring(0, endOfLineIndex - 1)             // extract string
-                            println(sbprint)
+
                             sb.delete(0, sb.length)
                             val sensors = sbprint.split("&".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
                             if (sensors.size == circles.size) {
-                                /******************************************
-                                 * Guardado de información en archivo .txt *
-                                 */
-
-                                val calendar = Calendar.getInstance()
-
-                                val day = calendar.get(Calendar.DAY_OF_MONTH)
-                                val month = calendar.get(Calendar.MONTH) + 1
-                                //  Meses se indexan desde el 0. Ej: Enero [0], ..., Diciembre [11]
-                                val year = calendar.get(Calendar.YEAR)
-                                val FILE = day.toString() + "-" + month.toString() + "-" + year.toString() + ".txt"
-
-                                val hour = calendar.get(Calendar.HOUR_OF_DAY)
-                                val minutes = calendar.get(Calendar.MINUTE)
-                                val seconds = calendar.get(Calendar.SECOND)
-                                val LINE = hour.toString() + ":" + minutes.toString() + ":" + seconds.toString() + "#"
-
-                                try {
-                                    if (timer % 120 == 0) {
-                                        // Creates a file in the primary external storage space of the
-                                        // current application.
-                                        // If the file does not exists, it is created.
-                                        val file = File(applicationContext.getExternalFilesDir(null), FILE)
-                                        if (!file.exists())
-                                            file.createNewFile()
-
-                                        // Adds a line to the file
-                                        val writer = BufferedWriter(FileWriter(file, true /*append*/))
-                                        writer.write(LINE + sbprint + "\n")
-                                        writer.close()
-                                    }
-                                } catch (e: IOException) {
-                                    Log.e("ReadWriteFile", "Unable to write to $FILE file!")
-                                }
-
                                 /************************************************************************
                                  * Dibujo de círculos & Envio de notificacion en caso de Estado Crítico *
                                  */
 
                                 for (i in sensors.indices) {
                                     if (isInteger(sensors[i])) {
-                                        if (Integer.parseInt(sensors[i]) > last_sensors[i] + last_sensors[i] * 0.1 || Integer.parseInt(sensors[i]) < last_sensors[i] - last_sensors[i] * 0.1) {
+                                        if (Integer.parseInt(sensors[i]) > last_sensors.get(i) + last_sensors.get(i) * 0.05 || Integer.parseInt(sensors[i]) < last_sensors.get(i) - last_sensors.get(i) * 0.05) {
                                             change = true
                                             break
                                         } else {
@@ -136,60 +96,53 @@ class Zonas : AppCompatActivity() {
                                     }
                                 }
 
-                                for (i in sensors.indices) {
-                                    if (isInteger(sensors[i])) {
-                                        last_sensors[i] = Integer.parseInt(sensors[i])
-                                        val value = Integer.parseInt(sensors[i])
-                                        val px130 = 130 * applicationContext.getResources().getDisplayMetrics().density
+                                    for (i in sensors.indices) {
+                                        if (isInteger(sensors[i])) {
+                                            last_sensors[i] = Integer.parseInt(sensors[i])
+                                            val value = Integer.parseInt(sensors[i])
+                                            val px130 = 130 * applicationContext.getResources().getDisplayMetrics().density
 
-                                        if (value < 10)
-                                            circles[i].visibility = View.INVISIBLE
-                                        else
-                                            circles[i].visibility = View.VISIBLE
+                                            if (value < 10)
+                                                circles[i].visibility = View.INVISIBLE
+                                            else
+                                                circles[i].visibility = View.VISIBLE
 
-                                        circles[i].getLayoutParams().width = value*px130.toInt()/1000
-                                        circles[i].getLayoutParams().height = value*px130.toInt()/1000
-                                        circles[i].requestLayout()
-                                        circles[i].invalidate()
+                                            circles[i].getLayoutParams().width = value * px130.toInt() / 1000
+                                            circles[i].getLayoutParams().height = value * px130.toInt() / 1000
+                                            circles[i].requestLayout()
+                                            circles[i].invalidate()
 
-                                        if (!change) {
-                                            if (/*(Integer.parseInt(sensors[i]) >= 0 && Integer.parseInt(sensors[i]) < 500) || */timer <= 300) {
+                                            if (!change) {
+                                                if ((Integer.parseInt(sensors[i]) >= 0 && Integer.parseInt(sensors[i]) < 450)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#8ee776")))
+                                                } else if ((Integer.parseInt(sensors[i]) >= 450 && Integer.parseInt(sensors[i]) < 550)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#ebe57d")))
+                                                } else if ((Integer.parseInt(sensors[i]) >= 550 && Integer.parseInt(sensors[i]) < 700)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#e99a5a")))
 
-                                                //  Reset of High Pressure timer for the 'i' sensor
-                                                prolongedCriticPressureTime[i] = 0
-                                                prolongedExtremPressureTime[i] = 0
-                                            } else if (/*(Integer.parseInt(sensors[i]) >= 500 && Integer.parseInt(sensors[i]) < 600) || */timer > 300 && timer <= 600) {
+                                                    displayNotificationOfState(i, "Critical")
+                                                } else if (Integer.parseInt(sensors[i]) >= 700) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#eb7d7d")))
 
-                                                //  Reset of High Pressure timer for the 'i' sensor
-                                                prolongedCriticPressureTime[i] = 0
-                                                prolongedExtremPressureTime[i] = 0
-                                            } else if (/*(Integer.parseInt(sensors[i]) >= 650 && Integer.parseInt(sensors[i]) < 750) || */timer > 600 && timer <= 900) {
-
-                                                //  Adding to High Pressure timer for the 'i' sensor
-                                                prolongedCriticPressureTime[i] = prolongedCriticPressureTime[i] + 1
-                                                prolongedExtremPressureTime[i] = 0
-                                                if (prolongedCriticPressureTime[i] == 1) {
-                                                    displayNotificationOfState(i, "Crítico")
+                                                    displayNotificationOfState(i, "Extreme")
                                                 }
-                                            } else if (/*Integer.parseInt(sensors[i]) >= 750 || */timer > 900) {
+                                            } else {
+                                                if ((Integer.parseInt(sensors[i]) >= 0 && Integer.parseInt(sensors[i]) < 450)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#8ee776")))
+                                                } else if ((Integer.parseInt(sensors[i]) >= 450 && Integer.parseInt(sensors[i]) < 550)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#ebe57d")))
+                                                } else if ((Integer.parseInt(sensors[i]) >= 550 && Integer.parseInt(sensors[i]) < 700)) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#e99a5a")))
 
-                                                //  Adding to High Pressure timer for the 'i' sensor
-                                                prolongedExtremPressureTime[i] = prolongedExtremPressureTime[i] + 1
-                                                prolongedCriticPressureTime[i] = 0
-                                                if (prolongedExtremPressureTime[i] == 1) {
-                                                    displayNotificationOfState(i, "Extremo")
+                                                    displayNotificationOfState(i, "Critical")
+                                                } else if (Integer.parseInt(sensors[i]) >= 700) {
+                                                    ImageViewCompat.setImageTintList(circles[i], ColorStateList.valueOf(Color.parseColor("#eb7d7d")))
+
+                                                    displayNotificationOfState(i, "Extreme")
                                                 }
                                             }
-                                        } else {
-                                            timer = 0
-
-                                            //  Reset of High Pressure timer for the 'i' sensor
-                                            prolongedCriticPressureTime[i] = 0
-                                            prolongedExtremPressureTime[i] = 0
                                         }
                                     }
-                                }
-                                timer = timer + 1
                             }
                         }
                     }
@@ -325,13 +278,13 @@ class Zonas : AppCompatActivity() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val noti: Notification
 
-        val ticker = "Conflicto en Zona de Presión " + (zone + 1).toString()
-        val contentTitle = "Zona de Presión " + (zone + 1).toString() + " en Estado " + state
+        val ticker = "Conflict on Pressure Zone #" + (zone + 1).toString()
+        val contentTitle = "Pressure Zone #" + (zone + 1).toString() + " on " + state + " state"
         var contentText: CharSequence = ""
-        if (state == "Crítico") {
-            contentText = "Por favor, cambia tu postura"
-        } else if (state == "Extremo") {
-            contentText = "Debes cambiar tu postura lo antes posible"
+        if (state == "Critical") {
+            contentText = "Please, change your posture"
+        } else if (state == "Extreme") {
+            contentText = "You must change your posture inmmediately"
         }
         val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
@@ -340,32 +293,8 @@ class Zonas : AppCompatActivity() {
                     .setTicker(ticker)
                     .setContentTitle(contentTitle)
                     .setContentText(contentText)
-                    .setSmallIcon(R.drawable.icono_192)
-                    .addAction(R.drawable.icono_192, ticker, pendingIntent)
-                    .setVibrate(longArrayOf(100, 250, 100, 500))
-                    .setSound(alarmSound)
-                    .build()
-        nm.notify(zone, noti)
-    }
-
-    protected fun displayNotificationOfProlongedHighPressure(zone: Int, state: String) {
-        val i = Intent(this, CloseItNow::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, i, 0)
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val noti: Notification
-
-        val ticker = "Conflicto en Zona de Presión " + (zone + 1).toString()
-        val contentTitle = "La Zona de Presión " + (zone + 1).toString() + " lleva"
-        val contentText = "demasiado tiempo en Estado $state"
-        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-        noti = NotificationCompat.Builder(this)
-                    .setContentIntent(pendingIntent)
-                    .setTicker(ticker)
-                    .setContentTitle(contentTitle)
-                    .setContentText(contentText)
-                    .setSmallIcon(R.drawable.icono_192)
-                    .addAction(R.drawable.icono_192, ticker, pendingIntent)
+                    .setSmallIcon(R.drawable.icono_48)
+                    .addAction(R.drawable.icono_48, ticker, pendingIntent)
                     .setVibrate(longArrayOf(100, 250, 100, 500))
                     .setSound(alarmSound)
                     .build()
