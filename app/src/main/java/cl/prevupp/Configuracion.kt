@@ -28,26 +28,13 @@ class Configuracion : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_configuracion)
         setTitle("Settings")
         navigation.getMenu().getItem(1).setChecked(true);
         //navigation.getMenu().removeItem(navigation.getMenu().getItem(1).itemId )
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
-
-        //fadein
-
-        //val myImageView = findViewById<ImageView>(R.id.bluetooth_icon)
-        //val myFadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.fadein)
-        //myImageView.startAnimation(myFadeInAnimation) //Set animation to your ImageView
-
-        //val myText = findViewById<ImageView>(R.id.ball)
-        //val anim = RotateAnimation(0.0f, 360.0f, 13f, 18.5f)
-        //anim.duration = 500 //You can manage the time of the blink with this parameter
-        //anim.startOffset = 20
-        //anim.repeatMode = Animation.RESTART
-        //anim.repeatCount = Animation.INFINITE
-        //myText.startAnimation(anim)
 
     }
 }
