@@ -18,6 +18,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".Configuracion" />
+        <activity android:name=".Bluetooth"></activity>
+        <activity android:name=".Zonas"></activity>
+        <activity android:name=".CloseItNow"></activity>
     </application>
 
 </manifest>

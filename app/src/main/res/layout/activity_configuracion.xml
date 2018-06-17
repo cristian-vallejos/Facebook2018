@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Configuracion"
+    tools:layout_editor_absoluteY="81dp">
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/navigation"
+        android:layout_width="384dp"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/windowBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/navigation" />
+
+    <Button
+        android:id="@+id/bluetooth"
+        android:layout_width="383dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="8dp"
+        android:background="#FFFFFF"
+        android:paddingLeft="80dp"
+        android:text="Sync Device"
+        android:textAlignment="textStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/bluetooth_icon"
+        android:layout_width="26dp"
+        android:layout_height="37dp"
+        android:layout_marginStart="32dp"
+        android:translationZ="100dip"
+        app:layout_constraintBottom_toBottomOf="@+id/bluetooth"
+        app:layout_constraintStart_toStartOf="@+id/bluetooth"
+        app:layout_constraintTop_toTopOf="@+id/bluetooth"
+        app:srcCompat="@drawable/bluetooth" />
+
+    <TextView
+        android:id="@+id/weight_var"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="8dp"
+        android:text="120 Kg"
+        android:translationZ="100dip"
+        app:layout_constraintBottom_toBottomOf="@+id/weight"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/weight" />
+
+    <Button
+        android:id="@+id/weight"
+        android:layout_width="383dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="8dp"
+        android:background="#FFFFFF"
+        android:paddingLeft="80dp"
+        android:text="Weight"
+        android:textAlignment="textStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bluetooth" />
+
+    <ImageView
+        android:id="@+id/weight_icon"
+        android:layout_width="26dp"
+        android:layout_height="37dp"
+        android:layout_marginStart="32dp"
+        android:translationZ="100dip"
+        app:layout_constraintBottom_toBottomOf="@+id/weight"
+        app:layout_constraintStart_toStartOf="@+id/weight"
+        app:layout_constraintTop_toTopOf="@+id/weight"
+        app:srcCompat="@drawable/weight" />
+
+    <TextView
+        android:id="@+id/gender_var"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="8dp"
+        android:text="Male"
+        android:translationZ="100dip"
+        app:layout_constraintBottom_toBottomOf="@+id/gender"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/gender" />
+
+    <Button
+        android:id="@+id/gender"
+        android:layout_width="383dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="8dp"
+        android:background="#FFFFFF"
+        android:paddingLeft="80dp"
+        android:text="Gender"
+        android:textAlignment="textStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weight" />
+
+    <ImageView
+        android:id="@+id/gender_icon"
+        android:layout_width="26dp"
+        android:layout_height="37dp"
+        android:layout_marginStart="32dp"
+        android:translationZ="100dip"
+        app:layout_constraintBottom_toBottomOf="@+id/gender"
+        app:layout_constraintStart_toStartOf="@+id/gender"
+        app:layout_constraintTop_toTopOf="@+id/gender"
+        app:srcCompat="@drawable/gender" />
+
+</android.support.constraint.ConstraintLayout>
